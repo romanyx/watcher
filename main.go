@@ -217,7 +217,7 @@ func (p *Proxy) changeSide(head string) {
 		return
 	}
 
-	getCmd := exec.Command("go", "get")
+	getCmd := exec.Command("go", "get", "-d")
 	getCmd.Stdout = os.Stdout
 	getCmd.Stderr = os.Stdout
 	getCmd.Dir = dir
