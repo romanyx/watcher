@@ -217,11 +217,20 @@ func (p *Proxy) changeSide(head string) {
 		return
 	}
 
-	installCmd := exec.Command("go", "build", "-o", p.binn)
-	installCmd.Stdout = os.Stdout
-	installCmd.Stderr = os.Stdout
-	installCmd.Dir = dir
-	if err := installCmd.Run(); err != nil {
+	getCmd := exec.Command("go", "get")
+	getCmd.Stdout = os.Stdout
+	getCmd.Stderr = os.Stdout
+	getCmd.Dir = dir
+	if err := getCmd.Run(); err != nil {
+		log.Println(errors.Wrap(err, "go get"))
+		return
+	}
+
+	buildCmd := exec.Command("go", "build", "-o", p.binn)
+	buildCmd.Stdout = os.Stdout
+	buildCmd.Stderr = os.Stdout
+	buildCmd.Dir = dir
+	if err := buildCmd.Run(); err != nil {
 		log.Println(errors.Wrap(err, "go build -o"))
 		return
 	}
