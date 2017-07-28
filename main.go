@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/hmac"
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
+	"rsc.io/letsencrypt"
 )
 
 var (
@@ -107,7 +109,18 @@ func main() {
 		p.proxy.ServeHTTP(w, r)
 	}))
 
-	go http.ListenAndServe(*hostPort, p)
+	var m letsencrypt.Manager
+	if err := m.CacheFile("letsencrypt.cache"); err != nil {
+		log.Fatal(err)
+	}
+	srv := &http.Server{
+		Addr:    ":443",
+		Handler: p.router,
+		TLSConfig: &tls.Config{
+			GetCertificate: m.GetCertificate,
+		},
+	}
+	go srv.ListenAndServeTLS("", "")
 
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
