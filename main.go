@@ -109,6 +109,20 @@ func main() {
 		p.proxy.ServeHTTP(w, r)
 	}))
 
+	s := &http.Server{
+		Addr: ":80",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			target := "https://" + r.Host + r.URL.Path
+			if len(r.URL.RawQuery) > 0 {
+				target += "?" + r.URL.RawQuery
+			}
+			log.Printf("redirect to: %s", target)
+			http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+		}),
+	}
+
+	go s.ListenAndServe()
+
 	var m letsencrypt.Manager
 	if err := m.CacheFile("letsencrypt.cache"); err != nil {
 		log.Fatal(err)
