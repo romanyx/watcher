@@ -23,15 +23,16 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
-	"rsc.io/letsencrypt"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
-	hostPort = flag.String("hostport", "localhost:8080", "server host and port")
-	repoName = flag.String("repo", "", "repo name")
-	logPath  = flag.String("log", "", "Log file path, default is output")
-	secret   = flag.String("secret", "", "Github notification secret")
-	binary   = flag.String("binary", "default-name", "Builded binary name")
+	hostPort   = flag.String("hostport", "localhost:8080", "server host and port")
+	repoName   = flag.String("repo", "", "Repo name")
+	domainName = flag.String("domain", "", "Domain name")
+	logPath    = flag.String("log", "", "Log file path, default is output")
+	secret     = flag.String("secret", "", "Github notification secret")
+	binary     = flag.String("binary", "default-name", "Builded binary name")
 )
 
 func main() {
@@ -123,9 +124,10 @@ func main() {
 
 	go s.ListenAndServe()
 
-	var m letsencrypt.Manager
-	if err := m.CacheFile("letsencrypt.cache"); err != nil {
-		log.Fatal(err)
+	m := &autocert.Manager{
+		Cache:      autocert.DirCache("secret-dir"),
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(*domainName),
 	}
 	srv := &http.Server{
 		Addr:    ":443",
