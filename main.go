@@ -56,6 +56,10 @@ func main() {
 		log.Fatal("Specify secret using flag -secret=")
 	}
 
+	if *domainName == "" {
+		log.Fatal("Specify domain using flag -domain=")
+	}
+
 	r := httprouter.New()
 
 	p := NewProxy(r, *repoName, *binary)
@@ -125,12 +129,15 @@ func main() {
 	go s.ListenAndServe()
 
 	m := &autocert.Manager{
-		Cache:      autocert.DirCache("secret-dir"),
+		Cache:      autocert.DirCache("."),
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(*domainName),
 	}
+
+	go http.ListenAndServe(":http", m.HTTPHandler(nil))
+
 	srv := &http.Server{
-		Addr:    ":443",
+		Addr:    ":https",
 		Handler: p.router,
 		TLSConfig: &tls.Config{
 			GetCertificate: m.GetCertificate,
